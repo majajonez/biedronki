@@ -1,6 +1,6 @@
 import math
 import random
-
+import os.path
 import pygame
 
 pygame.init()
@@ -111,32 +111,32 @@ def generowanie_biedronki():
     biedronki.append(biedronka)
 
 def wyniki(nowy_wynik):
-    lista_wynikow = open("wyniki_biedronki.pg")
-    lista = lista_wynikow.readlines()
-    lista_wynikow.close()
-    print(lista)
+    lista = pobierz_liste_wynikow()
     lista.append(nowy_wynik)
     najlepsze = [int(i) for i in lista]
     najlepsze.sort(reverse=True)
     lista_do_zapisu = [str(i) + '\n' for i in najlepsze]
     lista_wynikow = open("wyniki_biedronki.pg", "w")
     lista_wynikow.writelines(lista_do_zapisu)
-    print(lista_do_zapisu)
     lista_wynikow.close()
-    print(najlepsze)
 
 def lista_wynikow():
-    lista_wynikow = open("wyniki_biedronki.pg")
-    lista = lista_wynikow.readlines()
-    lista_wynikow.close()
-    y = 50
+    napis("Najlepsze wyniki", 20, 20, 40)
+    lista = pobierz_liste_wynikow()
+    y = 100
     for i in lista:
         j = i.strip()
         napis(j, 50, y, 20)
         y += 20
-    print(lista)
 
 
+def pobierz_liste_wynikow():
+    lista = []
+    if os.path.exists("wyniki_biedronki.pg"):
+        lista_wynikow = open("wyniki_biedronki.pg")
+        lista = lista_wynikow.readlines()
+        lista_wynikow.close()
+    return lista
 
 class Button():
     def __init__(self, tekst, x, y):
@@ -269,4 +269,9 @@ while run:
 
     pygame.display.update()
     pygame.time.wait(10)
+
+
+# gracz wychodzi poza ekran
+# biedronki produkują się w nieskonczonosc
+# brak mozliwosci zapisu imienia w wynikach
 
