@@ -79,10 +79,13 @@ class Gracz():
         pygame.draw.rect(screen, self.kolor, self.ksztalt, 0)
 
     def ruch(self, vx, vy):
-        self.x = self.x + vx
-        self.y = self.y + vy
+        nowyx = self.x + vx
+        if not (nowyx <= 0 or nowyx >= szerokosc - self.szer):
+            self.x = nowyx
+        nowyy = self.y + vy
+        if not (nowyy <= 0 or nowyy >= wysokosc - self.wys):
+            self.y = nowyy
         self.ksztalt = pygame.Rect(self.x, self.y, self.szer, self.wys)
-
 
 
 def napis(tekst, x, y, rozmiar, color=(255, 255, 255)):
