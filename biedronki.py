@@ -70,8 +70,8 @@ class Gracz():
     def __init__(self):
         self.x = 400
         self.y = 400
-        self.szer = 10
-        self.wys = 10
+        self.szer = 20
+        self.wys = 20
         self.kolor = (0, 0, 255)
         self.ksztalt = pygame.Rect(self.x, self.y, self.szer, self.wys)
 
@@ -93,7 +93,7 @@ def napis(tekst, x, y, rozmiar, color=(255, 255, 255)):
     rend = czcionka.render(tekst, True, color)
     screen.blit(rend, (x, y))
 
-
+plik = "wyniki_biedronki.pg"
 ekran = "menu"
 gracz = Gracz()
 player = gracz
@@ -106,40 +106,54 @@ def mnozenie_biedronek():
 
 def generowanie_biedronki():
     biedronka = Biedronka()
-    while biedronka.odleglosc(gracz) <= 50:
-        biedronka = Biedronka()
-    for j in biedronki:
-        while j.odleglosc(biedronka) <= 40 or biedronka.odleglosc(gracz) <= 50:
+    if len(biedronki) < 500:
+        while biedronka.odleglosc(gracz) <= 50:
             biedronka = Biedronka()
-    biedronki.append(biedronka)
+        for j in biedronki:
+            while j.odleglosc(biedronka) <= 40 or biedronka.odleglosc(gracz) <= 50:
+                biedronka = Biedronka()
+        biedronki.append(biedronka)
 
-def wyniki(nowy_wynik):
-    lista = pobierz_liste_wynikow()
-    lista.append(nowy_wynik)
-    najlepsze = [int(i) for i in lista]
-    najlepsze.sort(reverse=True)
-    lista_do_zapisu = [str(i) + '\n' for i in najlepsze]
-    lista_wynikow = open("wyniki_biedronki.pg", "w")
+
+def odczyt_wynikow():
+    lista_wynikow = open(plik)
+    lista_odczytana = lista_wynikow.readlines()
+    lista_wynikow.close()
+    lista_list = []
+    for l in lista_odczytana:
+        podzielona_linijka = l.split(" ")
+        x = [int(podzielona_linijka[0]), podzielona_linijka[1].strip()]
+        lista_list.append(x)
+        lista_list.sort(reverse=True, key=lambda x: x[0])
+    return lista_list
+
+def zapis_wynikow(lista):
+    lista_do_zapisu = []
+    for i in lista:
+        x = [str(i[0]), i[1]]
+        y = x[0] + " " + x[1] + "\n"
+        lista_do_zapisu.append(y)
+    lista_wynikow = open(plik, "w")
     lista_wynikow.writelines(lista_do_zapisu)
     lista_wynikow.close()
 
+
+def wyniki(nowy_wynik):
+    wyniki = odczyt_wynikow()
+    imie_gracza = imie_podane
+    nowy_wpis = [nowy_wynik, imie_gracza]
+    wyniki.append(nowy_wpis)
+    zapis_wynikow(wyniki)
+
+
 def lista_wynikow():
     napis("Najlepsze wyniki", 20, 20, 40)
-    lista = pobierz_liste_wynikow()
+    lista = odczyt_wynikow()
     y = 100
     for i in lista:
-        j = i.strip()
-        napis(j, 50, y, 20)
+        napis((str(i[0]) + " " + i[1]), 50, y, 20)
         y += 20
 
-
-def pobierz_liste_wynikow():
-    lista = []
-    if os.path.exists("wyniki_biedronki.pg"):
-        lista_wynikow = open("wyniki_biedronki.pg")
-        lista = lista_wynikow.readlines()
-        lista_wynikow.close()
-    return lista
 
 class Button():
     def __init__(self, tekst, x, y):
@@ -151,6 +165,7 @@ class Button():
         pygame.draw.rect(screen, color, self.guzik, ramka)
         screen.blit(self.napis, self.guzik)
 
+
 button_color = (255, 51, 51)
 klikniety = (255, 153, 153)
 
@@ -159,14 +174,38 @@ guziki = [
     Button("instrukcja", 250, 400)
     ]
 
-# lista_wynikow = open("wyniki_biedronki.pg", "w")
-# lista_wynikow.write(str("456"))
-# lista_wynikow.close()
 
+validChars = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./"
+shiftChars = '~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?'
+
+class TextBox(pygame.sprite.Sprite):
+  def __init__(self):
+    pygame.sprite.Sprite.__init__(self)
+    self.text = ""
+    self.font = pygame.font.Font(None, 50)
+    self.image = self.font.render("Podaj swoje imię", False, [255, 255, 255])
+    self.rect = self.image.get_rect()
+
+  def add_chr(self, char):
+    global shiftDown
+    if char in validChars and not shiftDown:
+        self.text += char
+    elif char in validChars and shiftDown:
+        self.text += shiftChars[validChars.index(char)]
+    self.update()
+
+  def update(self):
+    old_rect_pos = self.rect.center
+    self.image = self.font.render(self.text, False, [255, 255, 255])
+    self.rect = self.image.get_rect()
+    self.rect.center = old_rect_pos
+
+textBox = TextBox()
+shiftDown = False
+
+textBox.rect.center = [400, 400]
 
 licznik_obrotow = 0
-
-# mnozenie_biedronek()
 ktory_guzik = 0
 
 run = True
@@ -178,12 +217,24 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        if event.type == pygame.KEYUP:
+            if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]:
+                shiftDown = False
         if event.type == pygame.KEYDOWN:
+            textBox.add_chr(pygame.key.name(event.key))
             if event.key == pygame.K_SPACE:
-                if ekran != "rozgrywka":
+                if ekran == "menu":
                     gracz.rysuj()
                     ekran = "rozgrywka"
                     biedronki.clear()
+                if ekran == "koniec":
+                    textBox.text += " "
+                    textBox.update()
+            if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]:
+                shiftDown = True
+            if event.key == pygame.K_BACKSPACE:
+                textBox.text = textBox.text[:-1]
+                textBox.update()
             if event.key == pygame.K_ESCAPE:
                 if ekran != "menu":
                     biedronki.clear()
@@ -203,6 +254,13 @@ while run:
                         ekran = "wyniki"
                     elif ktory_guzik == 1:
                         ekran = "instrukcja"
+                if ekran == "koniec":
+                    if len(textBox.text) > 0:
+                        print(textBox.text)
+                        imie_podane = textBox.text
+                        wyniki(punkty)
+                        ekran = "wyniki"
+
 
     keys = pygame.key.get_pressed()  # checking pressed keys
     if keys[pygame.K_UP]:
@@ -240,7 +298,7 @@ while run:
             napis(j, 50, y, 20)
             y += 40
     elif ekran == "rozgrywka":
-        punkty = licznik_obrotow / 10
+        punkty = int(licznik_obrotow / 10)
         if licznik_obrotow % 20 == 0:
             generowanie_biedronki()
         licznik_obrotow +=1
@@ -254,7 +312,6 @@ while run:
                 biedronki.clear()
                 mnozenie_biedronek()
                 gracz = Gracz()
-                wyniki(punkty)
             for dronka in biedronki:
                 if b != dronka:
                     if b.kolizja(dronka):
@@ -263,9 +320,11 @@ while run:
                         b.ruch()
         napis(str(punkty), 20, 20, 20, (179, 198, 255))
     elif ekran == "koniec":
-        napis("GAME OVER", 50, 300, 20)
-        napis(("Liczba punktów: " + str(punkty)), 50, 400, 20)
-        napis("Naciśnij spację, aby zagrać jeszcze raz", 50, 500, 20)
+        napis("GAME OVER", 250, 100, 50)
+        napis(("Liczba punktów: " + str(punkty)), 50, 250, 30)
+        screen.blit(textBox.image, textBox.rect)
+        napis("Podaj swoje imię:", 50, 400, 30)
+        pygame.display.flip()
         biedronki.clear()
         licznik_obrotow = 0
 
