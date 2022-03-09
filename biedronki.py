@@ -125,7 +125,8 @@ def odczyt_wynikow():
         x = [int(podzielona_linijka[0]), podzielona_linijka[1].strip()]
         lista_list.append(x)
         lista_list.sort(reverse=True, key=lambda x: x[0])
-    return lista_list
+        top_10 = lista_list[:10]
+    return top_10
 
 def zapis_wynikow(lista):
     lista_do_zapisu = []
